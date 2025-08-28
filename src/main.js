@@ -1,1 +1,24 @@
-import { createApp } from 'vue'\nimport App from './App.vue'\nimport './style.css'\nimport Toast from 'vue-toastification'\nimport 'vue-toastification/dist/index.css'\n\nconst app = createApp(App)\n\napp.use(Toast, {\n  position: 'top-right',\n  timeout: 3000,\n  closeOnClick: true,\n  pauseOnFocusLoss: true,\n  pauseOnHover: true,\n  draggable: true,\n  draggablePercent: 0.6,\n  showCloseButtonOnHover: false,\n  hideProgressBar: false,\n  closeButton: 'button',\n  icon: true,\n  rtl: false\n})\n\napp.mount('#app')
+import { createApp } from 'vue'
+import App from './App.vue'
+import './style.css'
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
+
+const app = createApp(App)
+
+app.use(Toast, {
+  position: 'top-right',
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnFocusLoss: true,
+  pauseOnHover: true,
+  draggable: true,
+  draggablePercent: 0.6,
+  showCloseButtonOnHover: false,
+  hideProgressBar: false,
+  closeButton: 'button',
+  icon: true,
+  rtl: false
+})
+
+app.mount('#app')
