@@ -1,1 +1,11 @@
-import { defineConfig } from 'vite'\nimport vue from '@vitejs/plugin-vue'\n\nexport default defineConfig({\n  plugins: [vue()],\n  base: '/spinner/',\n  build: {\n    outDir: 'dist',\n    assetsDir: 'assets'\n  }\n})
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  base: '/spinner/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
+  }
+})
