@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:wheelofnames.com)",
+      "WebFetch(domain:spinthewheel.io)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
