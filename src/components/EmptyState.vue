@@ -1,0 +1,1 @@
+<template>\n  <div class=\"text-center text-gray-500 py-8 italic\">\n    <slot>\n      {{ defaultMessage }}\n    </slot>\n  </div>\n</template>\n\n<script setup>\ndefineProps({\n  defaultMessage: {\n    type: String,\n    default: 'No participants yet. Add some names to get started!'\n  }\n})\n</script>"

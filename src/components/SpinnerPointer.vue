@@ -1,0 +1,1 @@
+<template>\n  <div class=\"absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2\">\n    <div class=\"w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-red-500 drop-shadow-lg\"></div>\n  </div>\n</template>"
