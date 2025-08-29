@@ -73,6 +73,18 @@
                   <h3 class="text-lg font-semibold mb-3 text-white">Settings</h3>
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
+                      <span class="text-sm text-gray-200">Multiple Winners</span>
+                      <button
+                        @click="toggleMultipleWinners"
+                        :class="[
+                          multipleWinners ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gray-600',
+                          'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200'
+                        ]"
+                      >
+                        <span :class="[multipleWinners ? 'translate-x-5' : 'translate-x-1', 'inline-block h-3 w-3 transform rounded-full bg-white transition duration-200']" />
+                      </button>
+                    </div>
+                    <div class="flex items-center justify-between">
                       <span class="text-sm text-gray-200">Sound</span>
                       <button
                         @click="toggleSound"
@@ -213,8 +225,18 @@
                         </text>
                       </g>
                       
-                      <!-- Center dot only -->
-                      <circle cx="175" cy="175" r="8" fill="url(#centerGradient)" stroke="#ffffff" stroke-width="2" />
+                      <!-- Center anchor with arrow -->
+                      <g>
+                        <!-- Center circle -->
+                        <circle cx="175" cy="175" r="12" fill="url(#centerGradient)" stroke="#ffffff" stroke-width="3" />
+                        <!-- Arrow pointing right (to winner) -->
+                        <path
+                          d="M175 175 L190 165 L185 170 L195 170 L195 180 L185 180 L190 185 Z"
+                          fill="#ffffff"
+                          stroke="#1f2937"
+                          stroke-width="1"
+                        />
+                      </g>
                       
                       <!-- Gradients -->
                       <defs>
@@ -229,12 +251,12 @@
                       </defs>
                     </svg>
                     
-                    <!-- Static arrow pointer outside the wheel -->
-                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-20">
+                    <!-- Optional: External arrow pointer (can be enabled instead of center arrow) -->
+                    <!-- <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-20">
                       <div class="w-0 h-0 border-l-6 border-r-6 border-b-12 border-l-transparent border-r-transparent border-b-gradient-to-r from-yellow-400 to-orange-500 filter drop-shadow-lg">
                         <div class="w-0 h-0 border-l-5 border-r-5 border-b-10 border-l-transparent border-r-transparent border-b-yellow-400"></div>
                       </div>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
 
@@ -313,9 +335,10 @@ const spinnerRef = ref(null)
 const confettiCanvas = ref(null)
 
 // Settings
-const soundEnabled = ref(true)
+const soundEnabled = ref(false)
 const confettiEnabled = ref(true)
 const spinDuration = ref(4)
+const multipleWinners = ref(false)
 
 // Sound effects with better quality
 const spinSound = new Howl({
@@ -511,11 +534,21 @@ const spin = async () => {
     })
   })
   
-  // Determine winner (arrow points up, so we need to adjust calculation)
+  // Determine winner (arrow points right at 0 degrees)
   const normalizedAngle = (finalAngle % 360 + 360) % 360
-  const adjustedAngle = (450 - normalizedAngle) % 360  // Adjust for upward-pointing arrow
+  const adjustedAngle = (360 - normalizedAngle) % 360  // Adjust for right-pointing arrow
   const winnerIndex = Math.floor(adjustedAngle / segmentAngle) % participants.value.length
   winner.value = participants.value[winnerIndex]
+  
+  // Remove winner from participants if multiple winners mode is enabled
+  if (multipleWinners.value) {
+    const winnerIndex = participants.value.findIndex(p => p.id === winner.value.id)
+    if (winnerIndex !== -1) {
+      participants.value.splice(winnerIndex, 1)
+      toast.success(`${winner.value.name} eliminated! ${participants.value.length} participants remaining`)
+      saveToLocalStorage()
+    }
+  }
   
   if (soundEnabled.value) {
     winSound.play()
@@ -590,9 +623,18 @@ const toggleConfetti = () => {
   saveToLocalStorage()
 }
 
+const toggleMultipleWinners = () => {
+  multipleWinners.value = !multipleWinners.value
+  toast.info(multipleWinners.value ? '🏆 Multiple winners mode' : '👑 Single winner mode')
+  saveToLocalStorage()
+}
+
 const getSpinButtonText = () => {
   if (participants.value.length < 2) return 'Add at least 2 participants'
   if (isSpinning.value) return 'Spinning...'
+  if (multipleWinners.value) {
+    return `SPIN FOR ${participants.value.length > 1 ? 'NEXT' : 'FINAL'} WINNER!`
+  }
   return 'SPIN THE WHEEL!'
 }
 
@@ -641,7 +683,8 @@ const saveToLocalStorage = () => {
     participants: participants.value,
     soundEnabled: soundEnabled.value,
     confettiEnabled: confettiEnabled.value,
-    spinDuration: spinDuration.value
+    spinDuration: spinDuration.value,
+    multipleWinners: multipleWinners.value
   }))
 }
 
@@ -651,9 +694,10 @@ const loadFromLocalStorage = () => {
     if (saved) {
       const data = JSON.parse(saved)
       participants.value = data.participants || []
-      soundEnabled.value = data.soundEnabled ?? true
+      soundEnabled.value = data.soundEnabled ?? false
       confettiEnabled.value = data.confettiEnabled ?? true
       spinDuration.value = data.spinDuration || 4
+      multipleWinners.value = data.multipleWinners ?? false
     }
   } catch (error) {
     console.error('Failed to load from localStorage:', error)
