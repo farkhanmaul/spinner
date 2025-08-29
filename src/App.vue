@@ -1,1 +1,513 @@
-<template>\n  <div id=\"app\" class=\"min-h-screen p-4\">\n    <div class=\"max-w-4xl mx-auto\">\n      <!-- Header -->\n      <header class=\"text-center mb-8\">\n        <h1 class=\"text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4\">\n          🎯 8 Spinner\n        </h1>\n        <p class=\"text-gray-600 text-lg\">Random name picker with advanced customization</p>\n      </header>\n\n      <div class=\"grid lg:grid-cols-3 gap-8\">\n        <!-- Controls Panel -->\n        <div class=\"lg:col-span-1 space-y-6\">\n          <!-- Add Participant -->\n          <div class=\"glass rounded-2xl p-6 shadow-xl\">\n            <h3 class=\"text-xl font-semibold mb-4 text-gray-800\">Add Participant</h3>\n            <div class=\"flex gap-2\">\n              <input\n                v-model=\"newParticipant\"\n                @keypress.enter=\"addParticipant\"\n                type=\"text\"\n                placeholder=\"Enter name...\"\n                maxlength=\"20\"\n                class=\"flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all\"\n              />\n              <button\n                @click=\"addParticipant\"\n                :disabled=\"!newParticipant.trim()\"\n                class=\"px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium\"\n              >\n                Add\n              </button>\n            </div>\n          </div>\n\n          <!-- Settings -->\n          <div class=\"glass rounded-2xl p-6 shadow-xl\">\n            <h3 class=\"text-xl font-semibold mb-4 text-gray-800\">Settings</h3>\n            <div class=\"space-y-4\">\n              <div>\n                <label class=\"block text-sm font-medium text-gray-700 mb-2\">Sound Effects</label>\n                <button\n                  @click=\"toggleSound\"\n                  :class=\"[soundEnabled ? 'bg-green-500' : 'bg-gray-400', 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors']\"\n                >\n                  <span :class=\"[soundEnabled ? 'translate-x-6' : 'translate-x-1', 'inline-block h-4 w-4 transform rounded-full bg-white transition']\" />\n                </button>\n              </div>\n              \n              <div>\n                <label class=\"block text-sm font-medium text-gray-700 mb-2\">Spin Duration</label>\n                <input\n                  v-model=\"spinDuration\"\n                  type=\"range\"\n                  min=\"2\"\n                  max=\"8\"\n                  step=\"0.5\"\n                  class=\"w-full accent-blue-500\"\n                />\n                <div class=\"text-sm text-gray-500 text-center\">{{ spinDuration }}s</div>\n              </div>\n              \n              <div>\n                <label class=\"block text-sm font-medium text-gray-700 mb-2\">Confetti</label>\n                <button\n                  @click=\"toggleConfetti\"\n                  :class=\"[confettiEnabled ? 'bg-green-500' : 'bg-gray-400', 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors']\"\n                >\n                  <span :class=\"[confettiEnabled ? 'translate-x-6' : 'translate-x-1', 'inline-block h-4 w-4 transform rounded-full bg-white transition']\" />\n                </button>\n              </div>\n            </div>\n          </div>\n\n          <!-- Participants List -->\n          <div class=\"glass rounded-2xl p-6 shadow-xl\">\n            <h3 class=\"text-xl font-semibold mb-4 text-gray-800\">\n              Participants ({{ participants.length }})\n            </h3>\n            <div class=\"space-y-2 max-h-60 overflow-y-auto\">\n              <div\n                v-if=\"participants.length === 0\"\n                class=\"text-center text-gray-500 py-8 italic\"\n              >\n                No participants yet. Add some names to get started!\n              </div>\n              <div\n                v-for=\"(participant, index) in participants\"\n                :key=\"index\"\n                class=\"flex items-center justify-between p-3 bg-white/50 rounded-lg border border-white/30\"\n              >\n                <span class=\"font-medium text-gray-800\">{{ participant.name }}</span>\n                <button\n                  @click=\"removeParticipant(index)\"\n                  class=\"w-6 h-6 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full flex items-center justify-center transition-colors\"\n                >\n                  ✕\n                </button>\n              </div>\n            </div>\n            <button\n              v-if=\"participants.length > 0\"\n              @click=\"clearAll\"\n              class=\"w-full mt-4 px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors\"\n            >\n              Clear All\n            </button>\n          </div>\n        </div>\n\n        <!-- Spinner -->\n        <div class=\"lg:col-span-2\">\n          <div class=\"glass rounded-3xl p-8 shadow-2xl\">\n            <div class=\"flex flex-col items-center\">\n              <!-- Spinner Container -->\n              <div class=\"relative mb-8\">\n                <div class=\"spinner-container relative\">\n                  <svg\n                    ref=\"spinnerRef\"\n                    :class=\"['spinner-wheel transition-transform duration-1000 ease-out', { 'animate-pulse-glow': isSpinning }]\"\n                    width=\"350\"\n                    height=\"350\"\n                    viewBox=\"0 0 350 350\"\n                  >\n                    <!-- Wheel segments -->\n                    <g v-if=\"participants.length > 0\">\n                      <path\n                        v-for=\"(segment, index) in wheelSegments\"\n                        :key=\"index\"\n                        :d=\"segment.path\"\n                        :fill=\"segment.color\"\n                        stroke=\"#ffffff\"\n                        stroke-width=\"2\"\n                        class=\"spinner-segment cursor-pointer transition-all hover:brightness-110\"\n                        @click=\"highlightSegment(index)\"\n                      />\n                      <text\n                        v-for=\"(segment, index) in wheelSegments\"\n                        :key=\"`text-${index}`\"\n                        :x=\"segment.textX\"\n                        :y=\"segment.textY\"\n                        :transform=\"`rotate(${segment.textRotation}, ${segment.textX}, ${segment.textY})`\"\n                        fill=\"white\"\n                        text-anchor=\"middle\"\n                        dominant-baseline=\"middle\"\n                        class=\"text-sm font-bold pointer-events-none\"\n                        style=\"text-shadow: 1px 1px 2px rgba(0,0,0,0.7)\"\n                      >\n                        {{ participants[index].name.length > 8 ? participants[index].name.substring(0, 8) + '...' : participants[index].name }}\n                      </text>\n                    </g>\n                    \n                    <!-- Empty state -->\n                    <circle v-else cx=\"175\" cy=\"175\" r=\"150\" fill=\"#f3f4f6\" stroke=\"#d1d5db\" stroke-width=\"3\" />\n                    <text v-if=\"participants.length === 0\" x=\"175\" y=\"175\" text-anchor=\"middle\" dominant-baseline=\"middle\" class=\"text-lg font-medium fill-gray-500\">\n                      Add participants to start\n                    </text>\n                    \n                    <!-- Center circle -->\n                    <circle cx=\"175\" cy=\"175\" r=\"15\" fill=\"#1f2937\" />\n                  </svg>\n                  \n                  <!-- Pointer -->\n                  <div class=\"absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2\">\n                    <div class=\"w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-red-500 drop-shadow-lg\"></div>\n                  </div>\n                </div>\n              </div>\n\n              <!-- Spin Button -->\n              <button\n                @click=\"spin\"\n                :disabled=\"participants.length < 2 || isSpinning\"\n                :class=\"[\n                  'px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform',\n                  participants.length < 2 || isSpinning\n                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'\n                    : 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700 hover:scale-105 hover:shadow-2xl active:scale-95'\n                ]\"\n              >\n                {{ getSpinButtonText() }}\n              </button>\n\n              <!-- Winner Display -->\n              <Transition name=\"bounce\" appear>\n                <div\n                  v-if=\"winner\"\n                  class=\"mt-8 p-6 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-2xl shadow-2xl animate-bounce-in\"\n                >\n                  <div class=\"text-center\">\n                    <h2 class=\"text-2xl font-bold text-white mb-2\">🎉 Winner! 🎉</h2>\n                    <p class=\"text-3xl font-bold text-white\">{{ winner.name }}</p>\n                  </div>\n                </div>\n              </Transition>\n            </div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Confetti Canvas -->\n    <canvas\n      ref=\"confettiCanvas\"\n      id=\"confetti-canvas\"\n    ></canvas>\n  </div>\n</template>\n\n<script setup>\nimport { ref, computed, onMounted, nextTick } from 'vue'\nimport { gsap } from 'gsap'\nimport { Howl } from 'howler'\nimport confetti from 'canvas-confetti'\nimport { useToast } from 'vue-toastification'\n\nconst toast = useToast()\n\n// Reactive data\nconst participants = ref([])\nconst newParticipant = ref('')\nconst isSpinning = ref(false)\nconst winner = ref(null)\nconst spinnerRef = ref(null)\nconst confettiCanvas = ref(null)\n\n// Settings\nconst soundEnabled = ref(true)\nconst confettiEnabled = ref(true)\nconst spinDuration = ref(4)\n\n// Sound effects\nconst spinSound = new Howl({\n  src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoE'],\n  volume: 0.3\n})\n\nconst tickSound = new Howl({\n  src: ['data:audio/wav;base64,UklGRqYBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YYIBAABMuWOhNJTzVKJrEZW6M5DkVKFwYfOkCZWVM5biU6JwJa61JXqiAJaZM5/gUKN3SXqbJX2dEJWPM5beT6RyDIHfJH+gCJWGM5LdT6VzNISMJIOZGJV8M47cUKZzM4HJJIW9NZVyMYraUKdzCIq/JYu8OpVrMYXXUKh3GY2MI47HOJVjMoHUUal3G5OQJ5HLGZVcMnzRUap4MZiZKJPQFZVUMnnOUKp5M5qJJpbUEZVKMnXLT6p6LJ2YKZrYDZVAMXHIT6x8H6eiKJ7cCZU3MG/FT6x9BKe1J6DgBZUuMGvCT61/E6zCJ6HkAZUkMGi/UK1/LbDMKKToAJUaMVy8UK1/Vrc='],\n  volume: 0.1\n})\n\nconst winSound = new Howl({\n  src: ['data:audio/wav;base64,UklGRvQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdADAAC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4'],\n  volume: 0.5\n})\n\n// Color palette for wheel segments\nconst colors = [\n  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',\n  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',\n  '#ee5a24', '#009432', '#0652dd', '#9c88ff', '#fda7df',\n  '#fed330', '#fd9644', '#fc7b03', '#fdcb6e', '#6c5ce7'\n]\n\n// Computed properties\nconst wheelSegments = computed(() => {\n  if (participants.value.length === 0) return []\n  \n  const segments = []\n  const anglePerSegment = 360 / participants.value.length\n  const radius = 150\n  const centerX = 175\n  const centerY = 175\n  \n  participants.value.forEach((participant, index) => {\n    const startAngle = (index * anglePerSegment) - 90\n    const endAngle = ((index + 1) * anglePerSegment) - 90\n    \n    const startAngleRad = (startAngle * Math.PI) / 180\n    const endAngleRad = (endAngle * Math.PI) / 180\n    \n    const x1 = centerX + radius * Math.cos(startAngleRad)\n    const y1 = centerY + radius * Math.sin(startAngleRad)\n    const x2 = centerX + radius * Math.cos(endAngleRad)\n    const y2 = centerY + radius * Math.sin(endAngleRad)\n    \n    const largeArcFlag = anglePerSegment > 180 ? 1 : 0\n    \n    const pathData = [\n      `M ${centerX} ${centerY}`,\n      `L ${x1} ${y1}`,\n      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,\n      'Z'\n    ].join(' ')\n    \n    // Text position (midpoint of arc)\n    const midAngle = (startAngle + endAngle) / 2\n    const midAngleRad = (midAngle * Math.PI) / 180\n    const textRadius = radius * 0.7\n    const textX = centerX + textRadius * Math.cos(midAngleRad)\n    const textY = centerY + textRadius * Math.sin(midAngleRad)\n    \n    segments.push({\n      path: pathData,\n      color: colors[index % colors.length],\n      textX,\n      textY,\n      textRotation: midAngle + 90\n    })\n  })\n  \n  return segments\n})\n\n// Methods\nconst addParticipant = () => {\n  const name = newParticipant.value.trim()\n  \n  if (!name) {\n    toast.error('Please enter a name')\n    return\n  }\n  \n  if (participants.value.some(p => p.name.toLowerCase() === name.toLowerCase())) {\n    toast.error('This name is already in the list')\n    return\n  }\n  \n  if (participants.value.length >= 20) {\n    toast.error('Maximum 20 participants allowed')\n    return\n  }\n  \n  participants.value.push({\n    name,\n    id: Date.now(),\n    color: colors[participants.value.length % colors.length]\n  })\n  \n  newParticipant.value = ''\n  toast.success(`${name} added!`)\n  saveToLocalStorage()\n}\n\nconst removeParticipant = (index) => {\n  const removed = participants.value.splice(index, 1)[0]\n  toast.info(`${removed.name} removed`)\n  saveToLocalStorage()\n}\n\nconst clearAll = () => {\n  if (confirm('Are you sure you want to remove all participants?')) {\n    participants.value = []\n    winner.value = null\n    toast.info('All participants cleared')\n    saveToLocalStorage()\n  }\n}\n\nconst spin = async () => {\n  if (participants.value.length < 2 || isSpinning.value) return\n  \n  isSpinning.value = true\n  winner.value = null\n  \n  if (soundEnabled.value) {\n    spinSound.play()\n  }\n  \n  // Calculate random rotation\n  const minSpins = 5\n  const maxSpins = 10\n  const spins = Math.random() * (maxSpins - minSpins) + minSpins\n  const segmentAngle = 360 / participants.value.length\n  const randomSegment = Math.floor(Math.random() * participants.value.length)\n  const finalAngle = (spins * 360) + (randomSegment * segmentAngle) + (segmentAngle / 2)\n  \n  // Animate spinner\n  await new Promise(resolve => {\n    gsap.to(spinnerRef.value, {\n      rotation: finalAngle,\n      duration: spinDuration.value,\n      ease: 'power3.out',\n      onComplete: resolve\n    })\n  })\n  \n  // Determine winner\n  const normalizedAngle = (finalAngle % 360 + 360) % 360\n  const winnerIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % participants.value.length\n  winner.value = participants.value[winnerIndex]\n  \n  if (soundEnabled.value) {\n    winSound.play()\n  }\n  \n  if (confettiEnabled.value) {\n    showConfetti()\n  }\n  \n  isSpinning.value = false\n  toast.success(`🎉 ${winner.value.name} wins!`)\n}\n\nconst showConfetti = () => {\n  const canvas = confettiCanvas.value\n  const canvasConfetti = confetti.create(canvas, {\n    resize: true,\n    useWorker: true\n  })\n  \n  // Multiple bursts for better effect\n  for (let i = 0; i < 3; i++) {\n    setTimeout(() => {\n      canvasConfetti({\n        particleCount: 100,\n        spread: 70,\n        origin: { y: 0.6 },\n        colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#feca57', '#ff9ff3']\n      })\n    }, i * 300)\n  }\n}\n\nconst highlightSegment = (index) => {\n  if (isSpinning.value) return\n  \n  if (soundEnabled.value) {\n    tickSound.play()\n  }\n  \n  toast.info(`Selected: ${participants.value[index].name}`)\n}\n\nconst toggleSound = () => {\n  soundEnabled.value = !soundEnabled.value\n  toast.info(soundEnabled.value ? 'Sound enabled' : 'Sound disabled')\n  saveToLocalStorage()\n}\n\nconst toggleConfetti = () => {\n  confettiEnabled.value = !confettiEnabled.value\n  toast.info(confettiEnabled.value ? 'Confetti enabled' : 'Confetti disabled')\n  saveToLocalStorage()\n}\n\nconst getSpinButtonText = () => {\n  if (participants.value.length < 2) return 'Add at least 2 participants'\n  if (isSpinning.value) return 'Spinning...'\n  return '🎲 SPIN THE WHEEL!'\n}\n\nconst saveToLocalStorage = () => {\n  localStorage.setItem('8spinner-data', JSON.stringify({\n    participants: participants.value,\n    soundEnabled: soundEnabled.value,\n    confettiEnabled: confettiEnabled.value,\n    spinDuration: spinDuration.value\n  }))\n}\n\nconst loadFromLocalStorage = () => {\n  try {\n    const saved = localStorage.getItem('8spinner-data')\n    if (saved) {\n      const data = JSON.parse(saved)\n      participants.value = data.participants || []\n      soundEnabled.value = data.soundEnabled ?? true\n      confettiEnabled.value = data.confettiEnabled ?? true\n      spinDuration.value = data.spinDuration || 4\n    }\n  } catch (error) {\n    console.error('Failed to load from localStorage:', error)\n  }\n}\n\n// Lifecycle\nonMounted(() => {\n  loadFromLocalStorage()\n})\n</script>\n\n<style scoped>\n.bounce-enter-active {\n  animation: bounce-in 0.5s ease-out;\n}\n\n.bounce-leave-active {\n  animation: bounce-out 0.3s ease-in;\n}\n\n@keyframes bounce-in {\n  0% {\n    opacity: 0;\n    transform: scale(0.8) translateY(20px);\n  }\n  60% {\n    opacity: 1;\n    transform: scale(1.05) translateY(-5px);\n  }\n  100% {\n    opacity: 1;\n    transform: scale(1) translateY(0);\n  }\n}\n\n@keyframes bounce-out {\n  0% {\n    opacity: 1;\n    transform: scale(1);\n  }\n  100% {\n    opacity: 0;\n    transform: scale(0.8);\n  }\n}\n\n.spinner-wheel {\n  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15));\n}\n</style>"
+<template>
+  <div id="app" class="min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+          🎯 8 Spinner
+        </h1>
+        <p class="text-gray-600 text-lg">Random name picker with advanced customization</p>
+      </header>
+
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Controls Panel -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Add Participant -->
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Add Participant</h3>
+            <div class="flex gap-2">
+              <input
+                v-model="newParticipant"
+                @keypress.enter="addParticipant"
+                type="text"
+                placeholder="Enter name..."
+                maxlength="20"
+                class="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+              <button
+                @click="addParticipant"
+                :disabled="!newParticipant.trim()"
+                class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          <!-- Settings -->
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Settings</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sound Effects</label>
+                <button
+                  @click="toggleSound"
+                  :class="[soundEnabled ? 'bg-green-500' : 'bg-gray-400', 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors']"
+                >
+                  <span :class="[soundEnabled ? 'translate-x-6' : 'translate-x-1', 'inline-block h-4 w-4 transform rounded-full bg-white transition']" />
+                </button>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Spin Duration</label>
+                <input
+                  v-model="spinDuration"
+                  type="range"
+                  min="2"
+                  max="8"
+                  step="0.5"
+                  class="w-full accent-blue-500"
+                />
+                <div class="text-sm text-gray-500 text-center">{{ spinDuration }}s</div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confetti</label>
+                <button
+                  @click="toggleConfetti"
+                  :class="[confettiEnabled ? 'bg-green-500' : 'bg-gray-400', 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors']"
+                >
+                  <span :class="[confettiEnabled ? 'translate-x-6' : 'translate-x-1', 'inline-block h-4 w-4 transform rounded-full bg-white transition']" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Participants List -->
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">
+              Participants ({{ participants.length }})
+            </h3>
+            <div class="space-y-2 max-h-60 overflow-y-auto">
+              <div
+                v-if="participants.length === 0"
+                class="text-center text-gray-500 py-8 italic"
+              >
+                No participants yet. Add some names to get started!
+              </div>
+              <div
+                v-for="(participant, index) in participants"
+                :key="index"
+                class="flex items-center justify-between p-3 bg-white/50 rounded-lg border border-white/30"
+              >
+                <span class="font-medium text-gray-800">{{ participant.name }}</span>
+                <button
+                  @click="removeParticipant(index)"
+                  class="w-6 h-6 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full flex items-center justify-center transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <button
+              v-if="participants.length > 0"
+              @click="clearAll"
+              class="w-full mt-4 px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- Spinner -->
+        <div class="lg:col-span-2">
+          <div class="glass rounded-3xl p-8 shadow-2xl">
+            <div class="flex flex-col items-center">
+              <!-- Spinner Container -->
+              <div class="relative mb-8">
+                <div class="spinner-container relative">
+                  <svg
+                    ref="spinnerRef"
+                    :class="['spinner-wheel transition-transform duration-1000 ease-out', { 'animate-pulse-glow': isSpinning }]"
+                    width="350"
+                    height="350"
+                    viewBox="0 0 350 350"
+                  >
+                    <!-- Wheel segments -->
+                    <g v-if="participants.length > 0">
+                      <path
+                        v-for="(segment, index) in wheelSegments"
+                        :key="index"
+                        :d="segment.path"
+                        :fill="segment.color"
+                        stroke="#ffffff"
+                        stroke-width="2"
+                        class="spinner-segment cursor-pointer transition-all hover:brightness-110"
+                        @click="highlightSegment(index)"
+                      />
+                      <text
+                        v-for="(segment, index) in wheelSegments"
+                        :key="`text-${index}`"
+                        :x="segment.textX"
+                        :y="segment.textY"
+                        :transform="`rotate(${segment.textRotation}, ${segment.textX}, ${segment.textY})`"
+                        fill="white"
+                        text-anchor="middle"
+                        dominant-baseline="middle"
+                        class="text-sm font-bold pointer-events-none"
+                        style="text-shadow: 1px 1px 2px rgba(0,0,0,0.7)"
+                      >
+                        {{ participants[index].name.length > 8 ? participants[index].name.substring(0, 8) + '...' : participants[index].name }}
+                      </text>
+                    </g>
+                    
+                    <!-- Empty state -->
+                    <circle v-else cx="175" cy="175" r="150" fill="#f3f4f6" stroke="#d1d5db" stroke-width="3" />
+                    <text v-if="participants.length === 0" x="175" y="175" text-anchor="middle" dominant-baseline="middle" class="text-lg font-medium fill-gray-500">
+                      Add participants to start
+                    </text>
+                    
+                    <!-- Center circle -->
+                    <circle cx="175" cy="175" r="15" fill="#1f2937" />
+                  </svg>
+                  
+                  <!-- Pointer -->
+                  <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
+                    <div class="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-red-500 drop-shadow-lg"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Spin Button -->
+              <button
+                @click="spin"
+                :disabled="participants.length < 2 || isSpinning"
+                :class="[
+                  'px-12 py-4 rounded-2xl font-bold text-xl transition-all duration-300 transform',
+                  participants.length < 2 || isSpinning
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700 hover:scale-105 hover:shadow-2xl active:scale-95'
+                ]"
+              >
+                {{ getSpinButtonText() }}
+              </button>
+
+              <!-- Winner Display -->
+              <Transition name="bounce" appear>
+                <div
+                  v-if="winner"
+                  class="mt-8 p-6 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-2xl shadow-2xl animate-bounce-in"
+                >
+                  <div class="text-center">
+                    <h2 class="text-2xl font-bold text-white mb-2">🎉 Winner! 🎉</h2>
+                    <p class="text-3xl font-bold text-white">{{ winner.name }}</p>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas
+      ref="confettiCanvas"
+      id="confetti-canvas"
+    ></canvas>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { gsap } from 'gsap'
+import { Howl } from 'howler'
+import confetti from 'canvas-confetti'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
+
+// Reactive data
+const participants = ref([])
+const newParticipant = ref('')
+const isSpinning = ref(false)
+const winner = ref(null)
+const spinnerRef = ref(null)
+const confettiCanvas = ref(null)
+
+// Settings
+const soundEnabled = ref(true)
+const confettiEnabled = ref(true)
+const spinDuration = ref(4)
+
+// Sound effects
+const spinSound = new Howl({
+  src: ['data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoEJHfH8N2QQAoUXrTp66hVFApGn+DyvmIYBzaN1fHQfyoE'],
+  volume: 0.3
+})
+
+const tickSound = new Howl({
+  src: ['data:audio/wav;base64,UklGRqYBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YYIBAABMuWOhNJTzVKJrEZW6M5DkVKFwYfOkCZWVM5biU6JwJa61JXqiAJaZM5/gUKN3SXqbJX2dEJWPM5beT6RyDIHfJH+gCJWGM5LdT6VzNISMJIOZGJV8M47cUKZzM4HJJIW9NZVyMYraUKdzCIq/JYu8OpVrMYXXUKh3GY2MI47HOJVjMoHUUal3G5OQJ5HLGZVcMnzRUap4MZiZKJPQFZVUMnnOUKp5M5qJJpbUEZVKMnXLT6p6LJ2YKZrYDZVAMXHIT6x8H6eiKJ7cCZU3MG/FT6x9BKe1J6DgBZUuMGvCT61/E6zCJ6HkAZUkMGi/UK1/LbDMKKToAJUaMVy8UK1/Vrc='],
+  volume: 0.1
+})
+
+const winSound = new Howl({
+  src: ['data:audio/wav;base64,UklGRvQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YdADAAC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4'],
+  volume: 0.5
+})
+
+// Color palette for wheel segments
+const colors = [
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+  '#ee5a24', '#009432', '#0652dd', '#9c88ff', '#fda7df',
+  '#fed330', '#fd9644', '#fc7b03', '#fdcb6e', '#6c5ce7'
+]
+
+// Computed properties
+const wheelSegments = computed(() => {
+  if (participants.value.length === 0) return []
+  
+  const segments = []
+  const anglePerSegment = 360 / participants.value.length
+  const radius = 150
+  const centerX = 175
+  const centerY = 175
+  
+  participants.value.forEach((participant, index) => {
+    const startAngle = (index * anglePerSegment) - 90
+    const endAngle = ((index + 1) * anglePerSegment) - 90
+    
+    const startAngleRad = (startAngle * Math.PI) / 180
+    const endAngleRad = (endAngle * Math.PI) / 180
+    
+    const x1 = centerX + radius * Math.cos(startAngleRad)
+    const y1 = centerY + radius * Math.sin(startAngleRad)
+    const x2 = centerX + radius * Math.cos(endAngleRad)
+    const y2 = centerY + radius * Math.sin(endAngleRad)
+    
+    const largeArcFlag = anglePerSegment > 180 ? 1 : 0
+    
+    const pathData = [
+      `M ${centerX} ${centerY}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      'Z'
+    ].join(' ')
+    
+    // Text position (midpoint of arc)
+    const midAngle = (startAngle + endAngle) / 2
+    const midAngleRad = (midAngle * Math.PI) / 180
+    const textRadius = radius * 0.7
+    const textX = centerX + textRadius * Math.cos(midAngleRad)
+    const textY = centerY + textRadius * Math.sin(midAngleRad)
+    
+    segments.push({
+      path: pathData,
+      color: colors[index % colors.length],
+      textX,
+      textY,
+      textRotation: midAngle + 90
+    })
+  })
+  
+  return segments
+})
+
+// Methods
+const addParticipant = () => {
+  const name = newParticipant.value.trim()
+  
+  if (!name) {
+    toast.error('Please enter a name')
+    return
+  }
+  
+  if (participants.value.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    toast.error('This name is already in the list')
+    return
+  }
+  
+  if (participants.value.length >= 20) {
+    toast.error('Maximum 20 participants allowed')
+    return
+  }
+  
+  participants.value.push({
+    name,
+    id: Date.now(),
+    color: colors[participants.value.length % colors.length]
+  })
+  
+  newParticipant.value = ''
+  toast.success(`${name} added!`)
+  saveToLocalStorage()
+}
+
+const removeParticipant = (index) => {
+  const removed = participants.value.splice(index, 1)[0]
+  toast.info(`${removed.name} removed`)
+  saveToLocalStorage()
+}
+
+const clearAll = () => {
+  if (confirm('Are you sure you want to remove all participants?')) {
+    participants.value = []
+    winner.value = null
+    toast.info('All participants cleared')
+    saveToLocalStorage()
+  }
+}
+
+const spin = async () => {
+  if (participants.value.length < 2 || isSpinning.value) return
+  
+  isSpinning.value = true
+  winner.value = null
+  
+  if (soundEnabled.value) {
+    spinSound.play()
+  }
+  
+  // Calculate random rotation
+  const minSpins = 5
+  const maxSpins = 10
+  const spins = Math.random() * (maxSpins - minSpins) + minSpins
+  const segmentAngle = 360 / participants.value.length
+  const randomSegment = Math.floor(Math.random() * participants.value.length)
+  const finalAngle = (spins * 360) + (randomSegment * segmentAngle) + (segmentAngle / 2)
+  
+  // Animate spinner
+  await new Promise(resolve => {
+    gsap.to(spinnerRef.value, {
+      rotation: finalAngle,
+      duration: spinDuration.value,
+      ease: 'power3.out',
+      onComplete: resolve
+    })
+  })
+  
+  // Determine winner
+  const normalizedAngle = (finalAngle % 360 + 360) % 360
+  const winnerIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % participants.value.length
+  winner.value = participants.value[winnerIndex]
+  
+  if (soundEnabled.value) {
+    winSound.play()
+  }
+  
+  if (confettiEnabled.value) {
+    showConfetti()
+  }
+  
+  isSpinning.value = false
+  toast.success(`🎉 ${winner.value.name} wins!`)
+}
+
+const showConfetti = () => {
+  const canvas = confettiCanvas.value
+  const canvasConfetti = confetti.create(canvas, {
+    resize: true,
+    useWorker: true
+  })
+  
+  // Multiple bursts for better effect
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      canvasConfetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#feca57', '#ff9ff3']
+      })
+    }, i * 300)
+  }
+}
+
+const highlightSegment = (index) => {
+  if (isSpinning.value) return
+  
+  if (soundEnabled.value) {
+    tickSound.play()
+  }
+  
+  toast.info(`Selected: ${participants.value[index].name}`)
+}
+
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value
+  toast.info(soundEnabled.value ? 'Sound enabled' : 'Sound disabled')
+  saveToLocalStorage()
+}
+
+const toggleConfetti = () => {
+  confettiEnabled.value = !confettiEnabled.value
+  toast.info(confettiEnabled.value ? 'Confetti enabled' : 'Confetti disabled')
+  saveToLocalStorage()
+}
+
+const getSpinButtonText = () => {
+  if (participants.value.length < 2) return 'Add at least 2 participants'
+  if (isSpinning.value) return 'Spinning...'
+  return '🎲 SPIN THE WHEEL!'
+}
+
+const saveToLocalStorage = () => {
+  localStorage.setItem('8spinner-data', JSON.stringify({
+    participants: participants.value,
+    soundEnabled: soundEnabled.value,
+    confettiEnabled: confettiEnabled.value,
+    spinDuration: spinDuration.value
+  }))
+}
+
+const loadFromLocalStorage = () => {
+  try {
+    const saved = localStorage.getItem('8spinner-data')
+    if (saved) {
+      const data = JSON.parse(saved)
+      participants.value = data.participants || []
+      soundEnabled.value = data.soundEnabled ?? true
+      confettiEnabled.value = data.confettiEnabled ?? true
+      spinDuration.value = data.spinDuration || 4
+    }
+  } catch (error) {
+    console.error('Failed to load from localStorage:', error)
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  loadFromLocalStorage()
+})
+</script>
+
+<style scoped>
+.bounce-enter-active {
+  animation: bounce-in 0.5s ease-out;
+}
+
+.bounce-leave-active {
+  animation: bounce-out 0.3s ease-in;
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bounce-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.spinner-wheel {
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15));
+}
+</style>
