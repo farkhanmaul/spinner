@@ -172,6 +172,45 @@
                 </div>
               </div>
             </div>
+
+            <!-- Winner History (only show in multiple winners mode) -->
+            <div v-if="multipleWinners && winnerHistory.length > 0" class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-6 shadow-2xl">
+              <h3 class="text-lg font-semibold mb-4 text-white flex items-center">
+                <svg class="w-5 h-5 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                Winners ({{ winnerHistory.length }})
+              </h3>
+              
+              <div class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                <div
+                  v-for="(historyWinner, index) in winnerHistory"
+                  :key="historyWinner.timestamp"
+                  class="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-yellow-500/30"
+                >
+                  <div class="flex items-center space-x-3">
+                    <div class="flex items-center justify-center w-6 h-6 bg-yellow-500 text-black text-xs font-bold rounded-full">
+                      {{ historyWinner.position }}
+                    </div>
+                    <div 
+                      class="w-3 h-3 rounded-full"
+                      :style="{ backgroundColor: historyWinner.color }"
+                    ></div>
+                    <span class="text-white font-medium">{{ historyWinner.name }}</span>
+                  </div>
+                  <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              </div>
+              
+              <button
+                @click="clearWinnerHistory"
+                class="w-full mt-4 px-4 py-2 text-yellow-400 border border-yellow-500/30 rounded-lg hover:bg-yellow-500/10 hover:border-yellow-500/50 transition-all duration-200 font-medium text-sm"
+              >
+                Clear Winner History
+              </button>
+            </div>
           </div>
 
           <!-- Spinner -->
@@ -225,18 +264,8 @@
                         </text>
                       </g>
                       
-                      <!-- Center anchor with arrow -->
-                      <g>
-                        <!-- Center circle -->
-                        <circle cx="175" cy="175" r="12" fill="url(#centerGradient)" stroke="#ffffff" stroke-width="3" />
-                        <!-- Arrow pointing right (to winner) -->
-                        <path
-                          d="M175 175 L190 165 L185 170 L195 170 L195 180 L185 180 L190 185 Z"
-                          fill="#ffffff"
-                          stroke="#1f2937"
-                          stroke-width="1"
-                        />
-                      </g>
+                      <!-- Center circle only -->
+                      <circle cx="175" cy="175" r="12" fill="url(#centerGradient)" stroke="#ffffff" stroke-width="3" />
                       
                       <!-- Gradients -->
                       <defs>
@@ -251,12 +280,11 @@
                       </defs>
                     </svg>
                     
-                    <!-- Optional: External arrow pointer (can be enabled instead of center arrow) -->
-                    <!-- <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-20">
-                      <div class="w-0 h-0 border-l-6 border-r-6 border-b-12 border-l-transparent border-r-transparent border-b-gradient-to-r from-yellow-400 to-orange-500 filter drop-shadow-lg">
-                        <div class="w-0 h-0 border-l-5 border-r-5 border-b-10 border-l-transparent border-r-transparent border-b-yellow-400"></div>
+                    <!-- Static arrow pointer outside the wheel -->
+                    <div class="absolute top-1/2 right-0 transform translate-x-3 -translate-y-1/2 z-20">
+                      <div class="w-0 h-0 border-t-6 border-b-6 border-l-12 border-t-transparent border-b-transparent border-l-yellow-500 filter drop-shadow-lg">
                       </div>
-                    </div> -->
+                    </div>
                   </div>
                 </div>
 
@@ -331,6 +359,7 @@ const participants = ref([])
 const participantInput = ref('')
 const isSpinning = ref(false)
 const winner = ref(null)
+const winnerHistory = ref([])
 const spinnerRef = ref(null)
 const confettiCanvas = ref(null)
 
@@ -501,6 +530,7 @@ const clearAll = () => {
   if (confirm('Are you sure you want to remove all participants?')) {
     participants.value = []
     winner.value = null
+    winnerHistory.value = []
     toast.info('All participants cleared')
     saveToLocalStorage()
   }
@@ -516,13 +546,13 @@ const spin = async () => {
     spinSound.play()
   }
   
-  // Calculate random rotation
-  const minSpins = 8
-  const maxSpins = 15
-  const spins = Math.random() * (maxSpins - minSpins) + minSpins
+  // Calculate consistent rotation for better UX
+  const baseSpins = 5 // More consistent base spins
+  const extraSpins = Math.random() * 3 // Less random variation
+  const totalSpins = baseSpins + extraSpins
   const segmentAngle = 360 / participants.value.length
   const randomSegment = Math.floor(Math.random() * participants.value.length)
-  const finalAngle = (spins * 360) + (randomSegment * segmentAngle) + (segmentAngle / 2)
+  const finalAngle = (totalSpins * 360) + (randomSegment * segmentAngle) + (segmentAngle / 2)
   
   // Animate spinner with enhanced easing
   await new Promise(resolve => {
@@ -534,20 +564,31 @@ const spin = async () => {
     })
   })
   
-  // Determine winner (arrow points right at 0 degrees)
+  // Determine winner (arrow points right from outside)
   const normalizedAngle = (finalAngle % 360 + 360) % 360
-  const adjustedAngle = (360 - normalizedAngle) % 360  // Adjust for right-pointing arrow
-  const winnerIndex = Math.floor(adjustedAngle / segmentAngle) % participants.value.length
+  const winnerIndex = Math.floor(normalizedAngle / segmentAngle) % participants.value.length
   winner.value = participants.value[winnerIndex]
   
-  // Remove winner from participants if multiple winners mode is enabled
+  // Add winner to history and remove from participants if multiple winners mode is enabled
   if (multipleWinners.value) {
+    // Add to winner history
+    winnerHistory.value.push({
+      name: winner.value.name,
+      color: winner.value.color,
+      timestamp: Date.now(),
+      position: winnerHistory.value.length + 1
+    })
+    
+    // Remove from participants
     const winnerIndex = participants.value.findIndex(p => p.id === winner.value.id)
     if (winnerIndex !== -1) {
       participants.value.splice(winnerIndex, 1)
       toast.success(`${winner.value.name} eliminated! ${participants.value.length} participants remaining`)
       saveToLocalStorage()
     }
+  } else {
+    // Clear history in single winner mode
+    winnerHistory.value = []
   }
   
   if (soundEnabled.value) {
@@ -625,8 +666,19 @@ const toggleConfetti = () => {
 
 const toggleMultipleWinners = () => {
   multipleWinners.value = !multipleWinners.value
+  if (!multipleWinners.value) {
+    winnerHistory.value = [] // Clear history when switching to single mode
+  }
   toast.info(multipleWinners.value ? '🏆 Multiple winners mode' : '👑 Single winner mode')
   saveToLocalStorage()
+}
+
+const clearWinnerHistory = () => {
+  if (confirm('Clear all winner history?')) {
+    winnerHistory.value = []
+    toast.info('Winner history cleared')
+    saveToLocalStorage()
+  }
 }
 
 const getSpinButtonText = () => {
@@ -684,7 +736,8 @@ const saveToLocalStorage = () => {
     soundEnabled: soundEnabled.value,
     confettiEnabled: confettiEnabled.value,
     spinDuration: spinDuration.value,
-    multipleWinners: multipleWinners.value
+    multipleWinners: multipleWinners.value,
+    winnerHistory: winnerHistory.value
   }))
 }
 
@@ -698,6 +751,7 @@ const loadFromLocalStorage = () => {
       confettiEnabled.value = data.confettiEnabled ?? true
       spinDuration.value = data.spinDuration || 4
       multipleWinners.value = data.multipleWinners ?? false
+      winnerHistory.value = data.winnerHistory || []
     }
   } catch (error) {
     console.error('Failed to load from localStorage:', error)
