@@ -101,7 +101,7 @@
                       <button
                         @click="toggleConfetti"
                         :class="[
-                          confettiEnabled ? 'bg-gradient-to-r from-pink-500 to-rose-500' : 'bg-gray-600',
+                          confettiEnabled ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gray-600',
                           'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200'
                         ]"
                       >
@@ -776,12 +776,12 @@ onMounted(() => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(45deg, #8B5CF6, #EC4899);
+  background: linear-gradient(45deg, #DC2626, #F97316);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(45deg, #7C3AED, #DB2777);
+  background: linear-gradient(45deg, #B91C1C, #EA580C);
 }
 
 /* Range slider styling */
@@ -790,10 +790,10 @@ onMounted(() => {
   height: 18px;
   width: 18px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #8B5CF6, #EC4899);
+  background: linear-gradient(45deg, #DC2626, #F97316);
   cursor: pointer;
   border: 2px solid #ffffff;
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
 }
 
 .slider::-webkit-slider-track {
@@ -806,10 +806,10 @@ onMounted(() => {
   height: 18px;
   width: 18px;
   border-radius: 50%;
-  background: linear-gradient(45deg, #8B5CF6, #EC4899);
+  background: linear-gradient(45deg, #DC2626, #F97316);
   cursor: pointer;
   border: 2px solid #ffffff;
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
 }
 
 .slider::-moz-range-track {
@@ -820,7 +820,7 @@ onMounted(() => {
 
 /* Spinner animations */
 .spinner-wheel {
-  filter: drop-shadow(0 20px 40px rgba(139, 92, 246, 0.3));
+  filter: drop-shadow(0 20px 40px rgba(220, 38, 38, 0.3));
   transition: transform 0.3s ease;
 }
 
