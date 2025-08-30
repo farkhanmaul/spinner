@@ -1,10 +1,10 @@
 <template>
-  <div id="app" class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+  <div id="app" class="min-h-screen bg-gradient-to-br from-red-950 via-red-900 to-red-950">
     <!-- Background effects -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl animate-ping"></div>
+      <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-red-400/20 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-300/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-red-500/15 rounded-full blur-2xl animate-ping"></div>
     </div>
 
     <div class="relative z-10 p-4">
@@ -12,16 +12,16 @@
         <!-- Header -->
         <header class="text-center mb-8">
           <div class="inline-flex items-center space-x-3 mb-4">
-            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
               <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
               </svg>
             </div>
-            <h1 class="text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-red-100 via-red-200 to-red-100 bg-clip-text text-transparent">
               Spinner
             </h1>
           </div>
-          <p class="text-xl text-gray-300 font-light">Random Name Selector</p>
+          <p class="text-xl text-red-200 font-light">Random Name Selector</p>
         </header>
 
         <!-- Single screen layout -->
